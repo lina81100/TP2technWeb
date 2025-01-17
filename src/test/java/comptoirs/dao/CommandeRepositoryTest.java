@@ -26,29 +26,20 @@ public class CommandeRepositoryTest {
 
     private Commande commandeAvecProduits;
 
-    private Commande commandeSansProduits;
-
     @BeforeEach
     void setUp() {
         var client = clientDao.findById("ALFKI").orElseThrow();
-        var chai = produitDao.findById(1).orElseThrow();
-        var chang = produitDao.findById(2).orElseThrow();
-        // Une commande sans produits
-        commandeSansProduits = new Commande();
-        commandeSansProduits.setClient(client);
-        commandeSansProduits.setPort(new BigDecimal("10.00"));
-        commandeSansProduits.setSaisiele(LocalDate.now());
-        commandeSansProduits.setRemise(new BigDecimal("0.10")); // 10% remise
-        commandeDao.save(commandeSansProduits);
-        // Une commande avec des produits
+        var produit1 = produitDao.findById(1).orElseThrow();
+        var produit2 = produitDao.findById(2).orElseThrow();
+
         commandeAvecProduits = new Commande();
         commandeAvecProduits.setClient(client);
-        commandeAvecProduits.setPort(new BigDecimal("20.00"));
+        commandeAvecProduits.setRemise(new BigDecimal("0.10"));
         commandeAvecProduits.setSaisiele(LocalDate.now());
-        commandeAvecProduits.setRemise(new BigDecimal("0.20")); // 20% remise
-        // Deux lignes dans la commande
-        commandeAvecProduits.getLignes().add(new Ligne(commandeAvecProduits, chai, (short)10));
-        commandeAvecProduits.getLignes().add(new Ligne(commandeAvecProduits, chang, (short)20));
+
+        commandeAvecProduits.getLignes().add(new Ligne(commandeAvecProduits, produit1, (short) 10));
+        commandeAvecProduits.getLignes().add(new Ligne(commandeAvecProduits, produit2, (short) 5));
+
         commandeDao.save(commandeAvecProduits);
     }
 
@@ -58,4 +49,14 @@ public class CommandeRepositoryTest {
         assertEquals(commandeAvecProduits, commande);
         assertEquals(2, commande.getLignes().size());
     }
+
+    @Test
+    void testMontantArticles() {
+        Integer numeroCommande = 1;
+        BigDecimal montant = commandeDao.montantArticles(numeroCommande);
+
+        assertNotNull(montant, "Le montant doit être non nul");
+        assertTrue(montant.compareTo(BigDecimal.ZERO) > 0, "Le montant doit être positif");
+    }
+
 }

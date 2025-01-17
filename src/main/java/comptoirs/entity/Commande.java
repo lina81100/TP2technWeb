@@ -23,7 +23,7 @@ public class Commande {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Basic(optional = false)
 	@Column(nullable = false)
-	@Setter(AccessLevel.NONE) // la clé est auto-générée par la BD, On ne veut pas de "setter"
+	@Setter(AccessLevel.NONE)
 	private Integer numero;
 
 	@Basic(optional = false)

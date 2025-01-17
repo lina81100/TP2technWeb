@@ -1,6 +1,8 @@
 package comptoirs;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,23 +60,23 @@ public class ConsoleApp implements CommandLineRunner {
         int codeCategorie = 1;
         List<UnitesCommandeesParProduit> resultat = produitDAO.produitsVendusJPQL(codeCategorie);
         resultat.forEach( // Une autre syntaxe pour itérer sur une liste !
-            ligne -> log.info("Pour {} on a vendu {} unités", ligne.getNomProduit(), ligne.getUnitesCommandees())
-        );        
-         
+                ligne -> log.info("Pour {} on a vendu {} unités", ligne.getNomProduit(), ligne.getUnitesCommandees())
+        );
+
         tapezEnterPourContinuer();
 
         log.info("Même requête en SQL natif");
         resultat = produitDAO.produitsVendusSQL(codeCategorie);
-        resultat.forEach( 
-            ligne -> log.info("Pour {} on a vendu {} unités", ligne.getNomProduit(), ligne.getUnitesCommandees())
-        );        
-      
-        tapezEnterPourContinuer();    
+        resultat.forEach(
+                ligne -> log.info("Pour {} on a vendu {} unités", ligne.getNomProduit(), ligne.getUnitesCommandees())
+        );
+
+        tapezEnterPourContinuer();
         log.info("Pour un client, on trouve son adresse 'Embedded'");
         Optional<Client> ocl = clientDAO.findById("BONAP");
         ocl.ifPresent(cl -> log.info("On a trouvé l'adresse de 'BONAP' : {}", cl.getAdresse()));
 
-        tapezEnterPourContinuer();    
+        tapezEnterPourContinuer();
         log.info("Recherche par nom de société");
         Client cli = clientDAO.findBySociete("Alfreds Futterkiste").orElseThrow();
         log.info("On a trouvé le client {}",cli);
@@ -86,8 +88,39 @@ public class ConsoleApp implements CommandLineRunner {
         tapezEnterPourContinuer();
         log.info("Nombre de produits différents commandés par chaque client");
         clientDAO.produitsParClient().forEach(
-            ppc -> log.info("Le client {} a commandé {} produits différents", ppc.getSociete(), ppc.getNombre())
+                ppc -> log.info("Le client {} a commandé {} produits différents", ppc.getSociete(), ppc.getNombre())
         );
+
+        tapezEnterPourContinuer();
+        Commande commandeAvecProduits = creerCommandeAvecProduits();
+        log.info("Montant des articles commandés: {}", commandeDAO.montantArticles(commandeAvecProduits.getNumero()));
+
+        tapezEnterPourContinuer();
+        String codeClient = "ALFKI";
+        List<CommandeProjection> commandes = commandeDAO.findCommandesByClientCode(codeClient);
+
+        commandes.forEach(cmd -> {
+            System.out.println("Commande n° " + cmd.getNumero() +
+                    ", Port : " + cmd.getPort() +
+                    ", Montant total : " + cmd.getMontantTotal());
+        });
+
+    }
+
+    private Commande creerCommandeAvecProduits() {
+        var client = clientDAO.findById("ALFKI").orElseThrow();
+        var produit1 = produitDAO.findById(1).orElseThrow();
+        var produit2 = produitDAO.findById(2).orElseThrow();
+
+        Commande commande = new Commande();
+        commande.setClient(client);
+        commande.setRemise(new BigDecimal("0.10"));
+        commande.setSaisiele(LocalDate.now());
+
+        commande.getLignes().add(new Ligne(commande, produit1, (short) 10));
+        commande.getLignes().add(new Ligne(commande, produit2, (short) 5));
+
+        return commandeDAO.save(commande);
     }
 
     public static void tapezEnterPourContinuer() throws IOException  {
